@@ -55,8 +55,6 @@ lemma Summable.of_tsum_ne_zero {ι α : Type*} [AddCommMonoid α] [TopologicalSp
 lemma DiscreteDistFunc.summable [d : DiscreteDistFunc Ω] : Summable d.m := by
     exact Summable.of_tsum_ne_zero (by simp [d.hu])
 
---lemma fun_lem {A : Set Ω} {f : A → ℝ} {g : Ω → ℝ} (hg : g = fun i => if i∈A then f i else 0) (x : A) : f x = g x := by
-
 lemma DiscreteDistFunc.summable_set [d : DiscreteDistFunc Ω] (A : Set Ω) : Summable fun i : A => d.m i := by
     let f := fun i : Ω => d.m i
     set g := fun i : A => d.m i
@@ -118,47 +116,6 @@ def DiscreteDistFunc.toPMF (d : DiscreteDistFunc Ω) : PMF Ω := {
 noncomputable
 def DiscreteDistFunc.toMeasure (d : DiscreteDistFunc Ω) [MeasurableSpace Ω] : Measure Ω :=
   d.toPMF.toMeasure
-
--- Example 1.7
-namespace Example_1_7
-
-inductive Coin2 where
-  | HH
-  | HT
-  | TH
-  | TT
-  deriving Fintype
-
-open Coin2
-
-noncomputable
-instance dist : DiscreteDistFunc Coin2 := {
-  m := fun (x : Coin2) => 1/4
-  hp := by simp
-  hu := by
-    rw [one_div, tsum_const]
-    have hc : Nat.card Coin2 = 4 := by aesop
-    rw [hc]
-    norm_num
-  hc := by exact Finite.to_countable
-}
-
-lemma dist_pairwise : Pairwise (fun (x y : Coin2) => dist.m x = dist.m y) := by
-  exact fun ⦃i j⦄ ↦ congrFun rfl
-
-def E : Finset Coin2 := ⟨{HH,HT,TH},by simp⟩
-
-example : @P _ dist (E : Set Coin2) = 3/4 := by
-  rw [P, dist]
-  aesop
-
-def F : Finset Coin2 := ⟨{HH,HT},by simp⟩
-
-example : @P _ dist (F : Set Coin2) = 2/4 := by
-  rw [P, dist]
-  aesop
-
-end Example_1_7
 
 --Theorem 1.1
 --1
