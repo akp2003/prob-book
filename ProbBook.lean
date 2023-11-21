@@ -2,3 +2,4 @@
 -- Import modules here that should be built as part of the library.
 import «ProbBook».Basic
 import «ProbBook».Ch1
+import «ProbBook».Ch2
