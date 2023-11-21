@@ -1,6 +1,6 @@
 import Mathlib.Init.Set
 import Mathlib.Topology.Instances.ENNReal
-import Mathlib
+import Mathlib.Tactic.DeriveFintype
 
 variable {Ω : Type u}
 
@@ -39,16 +39,17 @@ def dist : DistFunc Coin2 := {
 lemma dist_pairwise : Pairwise (fun (x y : Coin2) => dist.m x = dist.m y) := by
   exact fun ⦃i j⦄ ↦ congrFun rfl
 
-def E : Set Coin2 := {HH,HT,TH}
+def E : Finset Coin2 := ⟨{HH,HT,TH},by simp⟩
 
 example : P dist E = 3/4 := by
   rw [P, dist]
-  have hc : Nat.card E = 3 := by
-    rw [E]
-    sorry
-  simp
-  rw [hc]
-  norm_num
+  aesop
+
+def F : Finset Coin2 := ⟨{HH,HT},by simp⟩
+
+example : P dist F = 2/4 := by
+  rw [P, dist]
+  aesop
 
 end Example_1_7
 
