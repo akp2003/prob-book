@@ -1157,6 +1157,8 @@ $$
 Property~4 can be generalized in another way.  Suppose that $A$ and $B$ are
 subsets of $\Omega$ which are not necessarily disjoint.  Then:\hfil\break
 \begin{theorem}\label{thm 1.2.5}
+\lean{P_union}
+\leanok
 If $A$ and $B$ are subsets of $\Omega$, then
 \begin{equation}
 P(A \cup B) = P(A) + P(B) - P(A \cap B)\ .
@@ -1164,6 +1166,8 @@ P(A \cup B) = P(A) + P(B) - P(A \cap B)\ .
 \end{equation}                                                                     
 \end{theorem}
 \begin{proof}
+\leanok
+\uses{thm 1.1.5}
 The left side of Equation~\ref{eq 1.1} is the sum of $m(\omega)$ for     
 $\omega$ in either $A$ or $B$.  We must show that the right side of 
 Equation~\ref{eq 1.1} also adds $m(\omega)$ for $\omega$ in $A$ or $B$. 
