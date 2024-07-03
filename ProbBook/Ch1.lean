@@ -107,3 +107,19 @@ theorem P_compl [d : DistFunc Ω] (A : Set Ω)
   exact Set.disjoint_compl_left_iff_subset.mpr fun ⦃a⦄ a ↦ a
   exact hsumc
   exact hsum
+
+lemma P_empty [DistFunc Ω] : P (∅ : Set Ω) = 0 := by
+  rw [P]
+  exact tsum_empty
+
+--Theorem 1.2
+theorem P_fin_pairwise_disjoint_union [d : DistFunc Ω]
+  (n : ℕ)
+  (I : Finset (Fin n))
+  (A : (Fin n) → Set Ω)
+  (hpd : (I : Set (Fin n)).Pairwise (Disjoint on A))
+  (hsum : ∀j , Summable fun i : A j ↦ d.m ↑i):
+    P (⋃ i ∈ I, A i) = ∑' (i : I), P (A i) := by
+  unfold P
+  rw [tsum_finset_bUnion_disjoint hpd (by exact fun i _ ↦ hsum i)]
+  rw [←(Finset.tsum_subtype I (fun i => (∑' (x : ↑(A i)), d.m ↑x)))]
