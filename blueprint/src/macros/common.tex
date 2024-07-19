@@ -1,3 +1,94 @@
 % In this file you should put all LaTeX macros to be used
 % both by the pdf version and the web version.
 % This should be most of your macros.
+
+%modified prob.tex
+
+\usepackage[dvips]{epsfig}	% specify `dvips' driver
+%\usepackage[pdftex]{epsfig}	% specify `pdftex' driver
+\usepackage{makeidx}
+\setlength{\textheight}{8.1in}
+\setlength{\textwidth}{5in}
+\setlength{\topmargin}{.25in}
+\setlength{\oddsidemargin}{.75in} % 1.25 for book Change to .75 for web version
+\setlength{\evensidemargin}{.75in} % .25 for book Change to .75 for web version
+
+%
+% Low-level figure positioning.  Change as appropriate to your system.
+%
+\newcommand{\barefig}[2]{\makebox{\includegraphics*[width=#2] {figures/#1.ps}}} 
+%
+% Higher-level figure commands.
+%
+\newcommand{\NA}{{\rm NA}}
+\usepackage{latexsym}
+\newif\ifdiscrete
+%\discretetrue
+\discretefalse
+\newcommand{\choice}[2]{\ifdiscrete{#1}\else{#2}\fi}
+
+%\putfig{3.5truein}{PSfig1.3}{Peter's winnings in 40 plays of heads or tails.}{fig 1.3}
+\newcommand{\putfig}[4]
+{\begin{figure}
+		\centerline{\barefig{#2}{#1}}
+		\caption{#3}
+		\label{#4}
+\end{figure}}
+
+\newcommand{\putfigdouble}[6]
+{\begin{figure}
+		\centerline{\barefig{#2}{#1}}
+		\centerline{\barefig{#4}{#3}}
+		\caption{#5}
+		\label{#6}
+\end{figure}}
+
+\newcommand{\nocaption}[4]
+{\begin{figure}
+		\centerline{\barefig{#2}{#1}}
+		%\caption{#3}
+		\label{#4}
+\end{figure}}
+
+\newtheorem{examp}{Example}[chapter]
+\newtheorem{defn}{Definition}[chapter]
+\newtheorem{thm}{Theorem}[chapter]
+\newtheorem{cor}{Corollary}[chapter]
+\newtheorem{prop}{Proposition}[chapter]
+\newtheorem{lem}{Lemma}[chapter]
+\newcommand{\exercises}{\subsection*{Exercises}}
+%\newcommand{\emx}[1]{{\emx{#1}\/}}
+%\newcommand{\mat}[1]{{\mbox{\bf#1}\/}}
+\newcommand{\emx}[1]{{\em{#1}\/}}
+\newcommand{\mat}[1]{{\mbox{\bf#1}\/}}
+
+
+\newenvironment{scope}{}{}
+\newenvironment{shrink}{\begin{scope} \small}{\end{scope}}
+\newenvironment{progout}{\begin{shrink}}{\end{shrink}}
+
+
+\newcount\exerciseno
+\def\i{\advance\exerciseno by 1\bigskip
+	\item[\bf{\the\exerciseno}]}
+\def\istar{\advance\exerciseno by 1\bigskip
+	\item[\bf{*\the\exerciseno}]}
+
+\newenvironment{LJSItem}{
+	
+	\newcommand{\exref}[1]{\ref{##1}}
+	\def\i{\renewcommand{\labelenumi}{\bf\theenumi}\item}
+	
+	\def\istar{\renewcommand{\labelenumi}{\bf*\theenumi}\item}
+	
+	\begin{enumerate}}
+	{\end{enumerate}}
+
+\def\partone{ch1,ch2,ch3,ch4,ch5,ch6}
+\def\parttwo{ch7,ch8,ch9,ch10,ch11,ch12}
+\def\all{front,\partone,\parttwo,back}
+\newcommand{\secstoprocess}{\all}
+%\typein[\secstoprocess]{enter the sections to process: }
+\includeonly{\secstoprocess}
+
+\makeindex
