@@ -11,7 +11,7 @@ structure DistFunc (Ω : Type u) where
   hs : (∑' ω, (m ω)) = 1
 
 noncomputable
-def P (dist : DistFunc Ω) (E : Set Ω) := (∑' (ω : E), (dist.m ω))
+def P (d : DistFunc Ω) (E : Set Ω) := (∑' (ω : E), (d.m ω))
 
 -- Example 1.7
 namespace Example_1_7
@@ -55,11 +55,55 @@ end Example_1_7
 
 --Theorem 1.1
 --1
-theorem P_positivity (dist : DistFunc Ω) (E : Set Ω) (hsum : Summable fun i : E ↦ dist.m ↑i):
-  P dist E ≥ 0 := by
-  rw [P]
-  have hp (ω : E) : dist.m ω ≥ 0 := by
-    exact dist.hp ↑ω
+theorem P_positivity (d : DistFunc Ω) (E : Set Ω) (hsumE : Summable fun i : E ↦ d.m ↑i):
+  P d E ≥ 0 := by
+  unfold P
+  have hp (ω : E) : d.m ω ≥ 0 := by
+    exact d.hp ↑ω
   calc
-    ∑' (ω : ↑E), dist.m ↑ω ≥ ∑' (i : ↑E), 0 := by rel [(tsum_le_tsum hp (summable_zero) (hsum))]
+    ∑' (ω : ↑E), d.m ↑ω ≥ ∑' (i : ↑E), 0 := by rel [(tsum_le_tsum hp (summable_zero) (hsumE))]
     _ ≥ 0 := by simp
+
+--2
+theorem P_eq_one (d : DistFunc Ω):
+  P d Set.univ = 1 := by
+  unfold P
+  rw [tsum_univ]
+  exact d.hs
+
+--3
+theorem P_le_of_subset (d : DistFunc Ω) (E : Set Ω) (F : Set Ω) (hss : E ⊂ F)
+  (hsumE : Summable fun i : E ↦ d.m ↑i)
+  (hsumF : Summable fun i : F ↦ d.m ↑i):
+  P d E ≤ P d F := by
+  unfold P
+  have hs : E ⊆ F := subset_of_ssubset hss
+  let e : E → F := fun x => ⟨x,by aesop⟩
+  have hi : Function.Injective e := by
+    unfold Function.Injective
+    aesop
+  have h1 : ∀ c ∉ Set.range e, 0 ≤ d.m c := fun c _ ↦ d.hp ↑c
+  have h2 : ∀ (i : E), d.m i ≤ d.m (e i) := fun i ↦ Preorder.le_refl (d.m ↑i)
+  exact tsum_le_tsum_of_inj e hi h1 h2 hsumE hsumF
+
+--4
+theorem P_union_disjoint (d : DistFunc Ω) (A : Set Ω) (B : Set Ω)
+  (hd : Disjoint A B)
+  (hsumA : Summable fun i : A ↦ d.m ↑i)
+  (hsumB : Summable fun i : B ↦ d.m ↑i):
+   P d (A ∪ B) = P d A + P d B := by
+  unfold P
+  exact tsum_union_disjoint hd hsumA hsumB
+
+--5
+theorem P_compl (d : DistFunc Ω) (A : Set Ω)
+  (hsum : Summable fun i : A ↦ d.m ↑i)
+  (hsumc : Summable fun i : (Set.compl A) ↦ d.m ↑i):
+   P d (Aᶜ) = 1 - P d (A) := by
+  rewrite [← (P_eq_one d)]
+  rewrite [(Set.compl_union_self A).symm]
+  rewrite [P_union_disjoint]
+  simp
+  exact Set.disjoint_compl_left_iff_subset.mpr fun ⦃a⦄ a ↦ a
+  exact hsumc
+  exact hsum
