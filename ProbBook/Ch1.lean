@@ -5,13 +5,13 @@ import Mathlib.Tactic.DeriveFintype
 variable {Ω : Type u}
 
 -- Definition 1.2
-structure DistFunc (Ω : Type u) where
+class DistFunc (Ω : Type u) where
   m : Ω → ℝ
   hp (ω : Ω) : m ω ≥ 0
   hs : (∑' ω, (m ω)) = 1
 
 noncomputable
-def P (d : DistFunc Ω) (E : Set Ω) := (∑' (ω : E), (d.m ω))
+def P [d : DistFunc Ω] (E : Set Ω) := (∑' (ω : E), (d.m ω))
 
 -- Example 1.7
 namespace Example_1_7
@@ -26,7 +26,7 @@ inductive Coin2 where
 open Coin2
 
 noncomputable
-def dist : DistFunc Coin2 := {
+instance dist : DistFunc Coin2 := {
   m := fun (x : Coin2) => 1/4
   hp := by simp
   hs := by
@@ -41,13 +41,13 @@ lemma dist_pairwise : Pairwise (fun (x y : Coin2) => dist.m x = dist.m y) := by
 
 def E : Finset Coin2 := ⟨{HH,HT,TH},by simp⟩
 
-example : P dist E = 3/4 := by
+example : @P _ dist E = 3/4 := by
   rw [P, dist]
   aesop
 
 def F : Finset Coin2 := ⟨{HH,HT},by simp⟩
 
-example : P dist F = 2/4 := by
+example : @P _ dist F = 2/4 := by
   rw [P, dist]
   aesop
 
@@ -55,8 +55,8 @@ end Example_1_7
 
 --Theorem 1.1
 --1
-theorem P_positivity (d : DistFunc Ω) (E : Set Ω) (hsumE : Summable fun i : E ↦ d.m ↑i):
-  P d E ≥ 0 := by
+theorem P_positivity [d : DistFunc Ω] (E : Set Ω) (hsumE : Summable fun i : E ↦ d.m ↑i):
+  P E ≥ 0 := by
   unfold P
   have hp (ω : E) : d.m ω ≥ 0 := by
     exact d.hp ↑ω
@@ -65,17 +65,17 @@ theorem P_positivity (d : DistFunc Ω) (E : Set Ω) (hsumE : Summable fun i : E 
     _ ≥ 0 := by simp
 
 --2
-theorem P_eq_one (d : DistFunc Ω):
-  P d Set.univ = 1 := by
+theorem P_eq_one [d : DistFunc Ω]:
+  P (Set.univ : Set Ω) = 1 := by
   unfold P
   rw [tsum_univ]
   exact d.hs
 
 --3
-theorem P_le_of_subset (d : DistFunc Ω) (E : Set Ω) (F : Set Ω) (hss : E ⊂ F)
+theorem P_le_of_subset [d : DistFunc Ω] (E : Set Ω) (F : Set Ω) (hss : E ⊂ F)
   (hsumE : Summable fun i : E ↦ d.m ↑i)
   (hsumF : Summable fun i : F ↦ d.m ↑i):
-  P d E ≤ P d F := by
+  P E ≤ P F := by
   unfold P
   have hs : E ⊆ F := subset_of_ssubset hss
   let e : E → F := fun x => ⟨x,by aesop⟩
@@ -87,20 +87,20 @@ theorem P_le_of_subset (d : DistFunc Ω) (E : Set Ω) (F : Set Ω) (hss : E ⊂ 
   exact tsum_le_tsum_of_inj e hi h1 h2 hsumE hsumF
 
 --4
-theorem P_union_disjoint (d : DistFunc Ω) (A : Set Ω) (B : Set Ω)
+theorem P_union_disjoint [d : DistFunc Ω] (A : Set Ω) (B : Set Ω)
   (hd : Disjoint A B)
   (hsumA : Summable fun i : A ↦ d.m ↑i)
   (hsumB : Summable fun i : B ↦ d.m ↑i):
-   P d (A ∪ B) = P d A + P d B := by
+   P (A ∪ B) = P A + P B := by
   unfold P
   exact tsum_union_disjoint hd hsumA hsumB
 
 --5
-theorem P_compl (d : DistFunc Ω) (A : Set Ω)
+theorem P_compl [d : DistFunc Ω] (A : Set Ω)
   (hsum : Summable fun i : A ↦ d.m ↑i)
   (hsumc : Summable fun i : (Set.compl A) ↦ d.m ↑i):
-   P d (Aᶜ) = 1 - P d (A) := by
-  rewrite [← (P_eq_one d)]
+   P (Aᶜ) = 1 - P (A) := by
+  rewrite [← (@P_eq_one Ω d)]
   rewrite [(Set.compl_union_self A).symm]
   rewrite [P_union_disjoint]
   simp
