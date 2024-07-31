@@ -115,6 +115,38 @@ lemma P_empty [DistFunc Ω] : P (∅ : Set Ω) = 0 := by
 --Theorem 1.2
 theorem P_fin_pairwise_disjoint_union [d : DistFunc Ω]
   (n : ℕ)
+  (A : (Fin n) → Set Ω)
+  (hpd : Pairwise (Disjoint on A))
+  (hsum : ∀j , Summable fun i : A j ↦ d.m ↑i):
+    P (⋃ i , A i) = ∑' i , P (A i) := by
+  have hpd2 : ((Finset.univ : Finset (Fin n)) : Set (Fin n)).Pairwise (Disjoint on A) := by
+    rw [Pairwise] at hpd
+    intro x _ y _
+    exact fun a ↦ hpd a
+  have hu : (⋃ i , A i) = ⋃ i ∈ Finset.univ, A i := by simp
+  unfold P
+  rw [hu]
+  rw [tsum_finset_bUnion_disjoint hpd2 (by exact fun i _ ↦ hsum i)]
+  exact Eq.symm (tsum_fintype fun b ↦ ∑' (ω : ↑(A b)), d.m ↑ω)
+
+--Some modified versions
+theorem P_fin_pairwise_disjoint_union2 [d : DistFunc Ω]
+  (n : ℕ)
+  (I : Finset (Fin n))
+  (A : (Fin n) → Set Ω)
+  (hpd : Pairwise (Disjoint on A))
+  (hsum : ∀j , Summable fun i : A j ↦ d.m ↑i):
+    P (⋃ i ∈ I, A i) = ∑' (i : I), P (A i) := by
+  unfold P
+  have hpd2 : (I : Set (Fin n)).Pairwise (Disjoint on A) := by
+    rw [Pairwise] at hpd
+    intro x _ y _
+    exact fun a ↦ hpd a
+  rw [tsum_finset_bUnion_disjoint hpd2 (by exact fun i _ ↦ hsum i)]
+  rw [←(Finset.tsum_subtype I (fun i => (∑' (x : ↑(A i)), d.m ↑x)))]
+
+theorem P_fin_pairwise_disjoint_union3 [d : DistFunc Ω]
+  (n : ℕ)
   (I : Finset (Fin n))
   (A : (Fin n) → Set Ω)
   (hpd : (I : Set (Fin n)).Pairwise (Disjoint on A))
@@ -123,3 +155,29 @@ theorem P_fin_pairwise_disjoint_union [d : DistFunc Ω]
   unfold P
   rw [tsum_finset_bUnion_disjoint hpd (by exact fun i _ ↦ hsum i)]
   rw [←(Finset.tsum_subtype I (fun i => (∑' (x : ↑(A i)), d.m ↑x)))]
+
+--Theorem 1.3
+theorem P_fin_pairwise_disjoint_inter [d : DistFunc Ω]
+  (n : ℕ) (A : (Fin n) → Set Ω)
+  (hpd : Pairwise (Disjoint on A))
+  (huniv : Set.univ = (⋃ i, A i)) (E : Set Ω)
+  (hsumEA : ∀j , Summable fun i : ↑(E ∩ A j) ↦ d.m ↑i):
+    P E = ∑' i, P (E ∩ A i) := by
+  let B : (Fin n) → Set Ω := fun i => E ∩ A i
+  have hpdB : Pairwise (Disjoint on B) := by
+    unfold_let
+    intro j k hjk
+    rw [Function.onFun_apply]
+    rw [Set.disjoint_iff_inter_eq_empty]
+    rw [← Set.inter_inter_distrib_left]
+    replace hpd : (Disjoint on A) j k := by exact hpd hjk
+    rw [Function.onFun_apply] at hpd
+    rw [Set.disjoint_iff_inter_eq_empty] at hpd
+    simp_all only [Set.disjoint_iUnion_left, ne_eq, Set.inter_empty]
+  have hsumB : ∀j , Summable fun i : B j ↦ d.m ↑i := by exact fun j ↦ hsumEA j
+  have hu : ⋃ i, B i = E := by
+    unfold_let
+    rw [← Set.inter_iUnion]
+    simp [← huniv]
+  rw [← P_fin_pairwise_disjoint_union n B hpdB hsumB]
+  rw [hu]
