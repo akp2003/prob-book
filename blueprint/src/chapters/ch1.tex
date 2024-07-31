@@ -1055,7 +1055,9 @@ satisfy the following properties:
 = P(A) + P(B)\ $.
 \item  $P(\tilde A) = 1 - P(A)$ for every $A \subset \Omega\ $.
 \end{enumerate}
-\proof
+\end{theorem}
+\begin{proof}
+\leanok
 For any event $E$ the probability $P(E)$ is determined from the distribution $m$
 by
 $$
@@ -1085,10 +1087,10 @@ $\Omega$.  Then every element $\omega$ of $A \cup B$ lies either in $A$ and
 not
 in $B$ or in $B$ and not in $A$.  It follows that
 $$\begin{array}{ll}
-P(A \cup B) &= \sum_{\omega \in A \cup B} m(\omega) = \sum_{\omega \in A}
-m(\omega) + \sum_{\omega \in B} m(\omega) \\
-            &                             \\
-            &= P(A) + P(B)\ ,
+	P(A \cup B) &= \sum_{\omega \in A \cup B} m(\omega) = \sum_{\omega \in A}
+	m(\omega) + \sum_{\omega \in B} m(\omega) \\
+	&                             \\
+	&= P(A) + P(B)\ ,
 \end{array}
 $$
 and Property 4 is proved.  
@@ -1103,7 +1105,7 @@ $$
 1 = P(A) + P(\tilde A)\ ,
 $$
 whence $P(\tilde A) = 1 - P(A)$.
-\end{theorem}
+\end{proof}
 \par
 It is important to realize that Property~4 in Theorem~\ref{thm 1.1} 
 can be extended to more than two sets.  The general finite additivity
@@ -1117,12 +1119,14 @@ If $A_1$, \dots, $A_n$ are pairwise disjoint subsets of $\Omega$
 $$
 P(A_1 \cup \cdots \cup A_n) = \sum_{i = 1}^n P(A_i)\ .
 $$
-\proof
-Let $\omega$ be any element in the union
-$$A_1 \cup \cdots \cup A_n\ .$$
-Then $m(\omega)$ occurs exactly once on each side of the equality in the
-statement of the theorem.
 \end{theorem} 
+\begin{proof}
+\leanok
+	Let $\omega$ be any element in the union
+	$$A_1 \cup \cdots \cup A_n\ .$$
+	Then $m(\omega)$ occurs exactly once on each side of the equality in the
+	statement of the theorem.
+\end{proof}
 \par
 We shall often use the following consequence of the above theorem.
 \begin{theorem}\label{thm 1.2}
@@ -1133,10 +1137,13 @@ We shall often use the following consequence of the above theorem.
 $$
 P(E) = \sum_{i = 1}^n P(E \cap A_i)\ .
 $$
-\proof
-The sets $E \cap A_1$, \dots, $E \cap A_n$ are pairwise disjoint, and their 
-union is the set $E$.  The result now follows from Theorem~\ref{thm 1.1.5}.
 \end{theorem}
+\begin{proof}
+\leanok
+\uses{thm 1.1.5}
+	The sets $E \cap A_1$, \dots, $E \cap A_n$ are pairwise disjoint, and their 
+	union is the set $E$.  The result now follows from Theorem~\ref{thm 1.1.5}.
+\end{proof}
 \begin{corollary}\label{cor 1.1}
 For any two events $A$ and $B$,
 $$
@@ -1151,8 +1158,9 @@ If $A$ and $B$ are subsets of $\Omega$, then
 \begin{equation}
 P(A \cup B) = P(A) + P(B) - P(A \cap B)\ .
 \label{eq 1.1}
-\end{equation}                                                        
-\proof
+\end{equation}                                                                     
+\end{theorem}
+\begin{proof}
 The left side of Equation~\ref{eq 1.1} is the sum of $m(\omega)$ for     
 $\omega$ in either $A$ or $B$.  We must show that the right side of 
 Equation~\ref{eq 1.1} also adds $m(\omega)$ for $\omega$ in $A$ or $B$. 
@@ -1163,9 +1171,8 @@ $P(A)$ and $P(B)$
 and subtracted once for $P(A \cap B)$.  Thus it is counted exactly once by
 the right side.  Of course, if $A \cap B = \emptyset$, then Equation~\ref{eq 1.1} 
 reduces to Property~4.
-(Equation~\ref{eq 1.1} can also be generalized; see Theorem~\ref{thm 3.10}.)               
-\end{theorem}
-
+(Equation~\ref{eq 1.1} can also be generalized; see Theorem~\ref{thm 3.10}.)  
+\end{proof}
 
 \subsection*{Tree Diagrams}
 
