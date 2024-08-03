@@ -4,3 +4,5 @@ import «ProbBook».Basic
 import «ProbBook».Ch1
 import «ProbBook».Ch1_Examples
 import «ProbBook».Ch2
+import «ProbBook».Ch3
+import «ProbBook».Ch4
