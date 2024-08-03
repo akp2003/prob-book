@@ -1040,7 +1040,7 @@ the next day," then $E = B - C$.
 \subsection*{Properties}
 \nopagebreak
 \begin{theorem}\label{thm 1.1}
-\lean{P_positivity, P_eq_one, P_le_of_subset, P_union_disjoint, P_compl}
+\lean{DiscreteDistFunc.P_positivity, DiscreteDistFunc.P_eq_one, DiscreteDistFunc.P_le_of_subset, DiscreteDistFunc.P_union_disjoint, DiscreteDistFunc.P_compl}
 \leanok
 The probabilities assigned to events by a distribution function\index{distribution function!
 properties of} on a sample space
@@ -1112,7 +1112,7 @@ can be extended to more than two sets.  The general finite additivity
 property\index{finite additivity property} is given by the following
 theorem.\hfil\break
 \begin{theorem}\label{thm 1.1.5}
-\lean{P_fin_pairwise_disjoint_union}
+\lean{DiscreteDistFunc.P_fin_pairwise_disjoint_union}
 \leanok
 If $A_1$, \dots, $A_n$ are pairwise disjoint subsets of $\Omega$
 (i.e., no two of the $A_i$'s have an element in common), then
@@ -1130,7 +1130,7 @@ $$
 \par
 We shall often use the following consequence of the above theorem.
 \begin{theorem}\label{thm 1.2}
-\lean{P_fin_pairwise_disjoint_inter}
+\lean{DiscreteDistFunc.P_fin_pairwise_disjoint_inter}
 \leanok
  Let $A_1$, \dots, $A_n$ be pairwise disjoint events with $\Omega = A_1
 \cup \cdots \cup A_n$, and let $E$ be any event.  Then
@@ -1145,7 +1145,7 @@ $$
 	union is the set $E$.  The result now follows from Theorem~\ref{thm 1.1.5}.
 \end{proof}
 \begin{corollary}\label{cor 1.1}
-\lean{P_inter_add_compl}
+\lean{DiscreteDistFunc.P_inter_add_compl}
 \leanok
 \uses{thm 1.2}
 For any two events $A$ and $B$,
@@ -1157,7 +1157,7 @@ $$
 Property~4 can be generalized in another way.  Suppose that $A$ and $B$ are
 subsets of $\Omega$ which are not necessarily disjoint.  Then:\hfil\break
 \begin{theorem}\label{thm 1.2.5}
-\lean{P_union}
+\lean{DiscreteDistFunc.P_union}
 \leanok
 If $A$ and $B$ are subsets of $\Omega$, then
 \begin{equation}
