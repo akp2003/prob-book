@@ -22,7 +22,6 @@ instance dist : DiscreteDistFunc Coin2 := {
     have hc : Nat.card Coin2 = 4 := by aesop
     rw [hc]
     norm_num
-  hc := by exact Finite.to_countable
 }
 
 

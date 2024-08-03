@@ -5,7 +5,12 @@ import Mathlib.MeasureTheory.Measure.Dirac
 import Mathlib.Probability.ProbabilityMassFunction.Basic
 import Mathlib.Data.ENNReal.Basic
 
+open Finset
+
 variable {Ω : Type u}
+
+lemma Summable.of_tsum_ne_zero {ι α : Type*} [AddCommMonoid α] [TopologicalSpace α] [T2Space α] {f : ι → α}
+   (hf : ∑' i, f i ≠ 0) : Summable f := not_imp_comm.1 tsum_eq_zero_of_not_summable hf
 
 -- Definition 1.2
 -- A huge thanks to Eric Wieser for his help on zulip :)
@@ -13,13 +18,15 @@ class DistFunc (Ω : Type u) where
   prob : Set Ω → ℝ
   hp (E : Set Ω) : prob E ≥ 0
   hu : prob (Set.univ) = 1
+  -- The third axiom of Kolmogorov (two sets version)
+  h3 (A B : Set Ω) (hd : Disjoint A B) : prob (A ∪ B) = prob A + prob B
 
 class DiscreteDistFunc (Ω : Type u) :=
-  hc : Countable Ω
   -- m returns probability
   m : Ω → ℝ
   hp (ω : Ω) : m ω ≥ 0
   hu : (∑' ω, (m ω)) = 1
+  hsum (A : Set Ω) : Summable fun i : A => m i := (summable_subtype_and_compl.mpr (Summable.of_tsum_ne_zero (by simp [hu]))).left
 
 @[simp]
 noncomputable
@@ -32,6 +39,9 @@ instance DiscreteDistFunc.toDistFunc [d : DiscreteDistFunc Ω] : DistFunc Ω := 
     exact tsum_nonneg hp1
   hu := by
     simp [d.hu]
+  h3 := by
+    intro A B hd
+    exact tsum_union_disjoint hd (hsum A) (hsum B)
 }
 
 noncomputable
@@ -47,24 +57,6 @@ open MeasureTheory.OuterMeasure
 noncomputable
 def DiscreteDistFunc.toOuterMeasure (d : DiscreteDistFunc Ω) : OuterMeasure Ω :=
   OuterMeasure.sum fun x : Ω => Real.toNNReal (d.m x) • dirac x
-
-lemma Summable.of_tsum_ne_zero {ι α : Type*} [AddCommMonoid α] [TopologicalSpace α] [T2Space α] {f : ι → α}
-   (hf : ∑' i, f i ≠ 0) : Summable f := not_imp_comm.1 tsum_eq_zero_of_not_summable hf
-
-
-lemma DiscreteDistFunc.summable [d : DiscreteDistFunc Ω] : Summable d.m := by
-    exact Summable.of_tsum_ne_zero (by simp [d.hu])
-
-lemma DiscreteDistFunc.summable_set [d : DiscreteDistFunc Ω] (A : Set Ω) : Summable fun i : A => d.m i := by
-    let f := fun i : Ω => d.m i
-    set g := fun i : A => d.m i
-    have hs : Summable f := by
-      unfold_let
-      exact Summable.of_tsum_ne_zero (by simp [d.hu])
-    exact (summable_subtype_and_compl.mpr hs).left
-    --I can't believe I proved this theorem!
-    --Now I don't need to add Summable assumptions to my theorems
-    --exact? keeps searching but can't find this!
 
 -- Thanks to Yaël Dillies for proving this nice lemma
 lemma HasSum.of_tsum_ne_zero {ι α : Type*} [AddCommMonoid α] [TopologicalSpace α] [T2Space α] {f : ι → α}
@@ -126,7 +118,7 @@ theorem P_positivity [d : DiscreteDistFunc Ω] (E : Set Ω) :
   have hp (ω : E) : d.m ω ≥ 0 := by
     exact d.hp ↑ω
   calc
-    ∑' (ω : ↑E), d.m ↑ω ≥ ∑' (i : ↑E), 0 := by rel [(tsum_le_tsum hp (summable_zero) (d.summable_set E))]
+    ∑' (ω : ↑E), d.m ↑ω ≥ ∑' (i : ↑E), 0 := by rel [(tsum_le_tsum hp (summable_zero) (d.hsum E))]
     _ ≥ 0 := by simp
 
 --2
@@ -145,14 +137,14 @@ theorem P_le_of_subset [d : DiscreteDistFunc Ω] (E : Set Ω) (F : Set Ω) (hss 
     aesop
   have h1 : ∀ c ∉ Set.range e, 0 ≤ d.m c := fun c _ ↦ d.hp ↑c
   have h2 : ∀ (i : E), d.m i ≤ d.m (e i) := fun i ↦ Preorder.le_refl (d.m ↑i)
-  exact tsum_le_tsum_of_inj e hi h1 h2 (d.summable_set E) (d.summable_set F)
+  exact tsum_le_tsum_of_inj e hi h1 h2 (d.hsum E) (d.hsum F)
 
 --4
 theorem P_union_disjoint [d : DiscreteDistFunc Ω] (A : Set Ω) (B : Set Ω)
   (hd : Disjoint A B):
    P (A ∪ B) = P A + P B := by
   unfold P
-  exact tsum_union_disjoint hd (d.summable_set A) (d.summable_set B)
+  exact tsum_union_disjoint hd (d.hsum A) (d.hsum B)
 
 --5
 theorem P_compl [d : DiscreteDistFunc Ω] (A : Set Ω):
@@ -167,7 +159,6 @@ lemma P_empty [DiscreteDistFunc Ω] : P (∅ : Set Ω) = 0 := by
   rw [P]
   exact tsum_empty
 
-open Finset
 --Theorem 1.2
 theorem P_fin_pairwise_disjoint_union [d : DiscreteDistFunc Ω]
   (n : ℕ)
@@ -176,7 +167,7 @@ theorem P_fin_pairwise_disjoint_union [d : DiscreteDistFunc Ω]
     P (⋃ i ∈ range n , A i) = ∑ i ∈ (range n), P (A i) := by
   unfold P
   dsimp
-  rw [tsum_finset_bUnion_disjoint hpd (by exact fun i _ ↦ (fun j ↦ d.summable_set (A j)) i)]
+  rw [tsum_finset_bUnion_disjoint hpd (by exact fun i _ ↦ (fun j ↦ d.hsum (A j)) i)]
 
 --Some modified versions
 theorem P_fin_pairwise_disjoint_union2 [d : DiscreteDistFunc Ω]
@@ -191,7 +182,7 @@ theorem P_fin_pairwise_disjoint_union2 [d : DiscreteDistFunc Ω]
     intro x _ y _
     exact fun a ↦ hpd a
   dsimp
-  rw [tsum_finset_bUnion_disjoint hpd2 (by exact fun i _ ↦ (fun j ↦ d.summable_set (A j)) i)]
+  rw [tsum_finset_bUnion_disjoint hpd2 (by exact fun i _ ↦ (fun j ↦ d.hsum (A j)) i)]
   rw [←(Finset.tsum_subtype I (fun i => (∑' (x : ↑(A i)), d.m ↑x)))]
 
 theorem P_fin_pairwise_disjoint_union3 [d : DiscreteDistFunc Ω]
@@ -202,7 +193,7 @@ theorem P_fin_pairwise_disjoint_union3 [d : DiscreteDistFunc Ω]
     P (⋃ i ∈ I, A i) = ∑' (i : I), P (A i) := by
   unfold P
   dsimp
-  rw [tsum_finset_bUnion_disjoint hpd (by exact fun i _ ↦ (fun j ↦ d.summable_set (A j)) i)]
+  rw [tsum_finset_bUnion_disjoint hpd (by exact fun i _ ↦ (fun j ↦ d.hsum (A j)) i)]
   rw [←(Finset.tsum_subtype I (fun i => (∑' (x : ↑(A i)), d.m ↑x)))]
 
 theorem P_fin_pairwise_disjoint_union4 [d : DiscreteDistFunc Ω]
@@ -218,7 +209,7 @@ theorem P_fin_pairwise_disjoint_union4 [d : DiscreteDistFunc Ω]
   unfold P
   rw [hu]
   dsimp
-  rw [tsum_finset_bUnion_disjoint hpd2 (by exact fun i _ ↦ (fun j ↦ d.summable_set (A j)) i)]
+  rw [tsum_finset_bUnion_disjoint hpd2 (by exact fun i _ ↦ (fun j ↦ d.hsum (A j)) i)]
   exact Eq.symm (tsum_fintype fun b ↦ ∑' (ω : ↑(A b)), d.m ↑ω)
 
 --Theorem 1.3
