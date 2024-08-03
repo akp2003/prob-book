@@ -39,4 +39,4 @@ theorem Independent_iff_P_inter [d : DistFunc Ω] (E : Set Ω) (F : Set Ω) :
       have hFE :  P ⟦F | E⟧ = P F := by
         rw [Set.inter_comm] at h
         aesop
-      exact ⟨hF,⟨hE,⟨hEF, hFE⟩⟩⟩
+      exact ⟨hF,hE,hEF,hFE⟩
