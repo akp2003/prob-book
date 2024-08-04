@@ -1,6 +1,5 @@
 import ProbBook.DistFunc
 
-import Mathlib
 variable {Ω : Type u}
 
 -- A Notation for conditional probability

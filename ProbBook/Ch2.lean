@@ -9,7 +9,7 @@ import Mathlib.Analysis.Calculus.Deriv.Basic
 import Mathlib.Analysis.Calculus.Deriv.Add
 import Mathlib.MeasureTheory.Integral.FundThmCalculus
 
-open MeasureTheory Filter Set ProbabilityTheory Topology ProbabilityTheory
+open MeasureTheory Filter Set ProbabilityTheory Topology
 
 -- Definition 2.1
 class ContinuousDistFunc :=
@@ -18,9 +18,27 @@ class ContinuousDistFunc :=
   hp (x : ℝ) : f x ≥ 0
   hu : ∫ (x : ℝ), f x = 1
 
+-- some useful lemmas here
+lemma ContinuousDistFunc.f_Integrable [d : ContinuousDistFunc] : Integrable f := integrable_of_integral_eq_one hu
+
+-- This theorem reminds me of DiscreteDistFunc.summable_set
+lemma ContinuousDistFunc.f_Integrable_restrict [d : ContinuousDistFunc] (E : Set ℝ): Integrable f (volume.restrict E) := by
+    rw [Integrable]
+    have hnz : ∫ (x : ℝ), f x ≠ 0 := by
+      rw [d.hu]
+      exact Ne.symm (zero_ne_one' ℝ)
+    have h1 : AEStronglyMeasurable f := by exact not_imp_comm.1 integral_non_aestronglyMeasurable hnz
+    constructor
+    · exact AEStronglyMeasurable.restrict h1
+    · exact HasFiniteIntegral.restrict f_Integrable.right
+
+lemma ContinuousDistFunc.f_IntegrableOn [d : ContinuousDistFunc] (E : Set ℝ): IntegrableOn f E := by
+    rw [IntegrableOn]
+    exact f_Integrable_restrict E
+
 @[simp]
 noncomputable
-instance ContinuousDistFunc.toDistFunc [d : ContinuousDistFunc] : DistFunc ℝ := {
+instance ContinuousDistFunc.toQuasiDistFunc [d : ContinuousDistFunc] : QuasiDistFunc ℝ := {
   prob := fun (E : Set ℝ) => ∫ x in E, f x
   hp := by
     intro E
@@ -31,7 +49,7 @@ instance ContinuousDistFunc.toDistFunc [d : ContinuousDistFunc] : DistFunc ℝ :
 }
 
 -- Definition 2.2
-def F [DistFunc ℝ] (x : ℝ) : ℝ := P {X | X ≤ x}
+def F [QuasiDistFunc ℝ] (x : ℝ) : ℝ := P {X | X ≤ x}
 
 namespace ContinuousDistFunc
 
@@ -39,26 +57,6 @@ namespace ContinuousDistFunc
 lemma P_empty [ContinuousDistFunc] : P (∅ : Set ℝ) = 0 := by
   unfold P
   simp
-
-@[simp]
-lemma f_Integrable [d : ContinuousDistFunc] : Integrable f := integrable_of_integral_eq_one d.hu
-
--- This theorem reminds me of DiscreteDistFunc.summable_set
-@[simp]
-lemma f_Integrable_restrict [d : ContinuousDistFunc] (E : Set ℝ): Integrable f (volume.restrict E) := by
-  rw [Integrable]
-  have hnz : ∫ (x : ℝ), f x ≠ 0 := by
-    rw [d.hu]
-    exact Ne.symm (zero_ne_one' ℝ)
-  have h1 : AEStronglyMeasurable f := by exact not_imp_comm.1 integral_non_aestronglyMeasurable hnz
-  constructor
-  · exact AEStronglyMeasurable.restrict h1
-  · exact HasFiniteIntegral.restrict f_Integrable.right
-
-@[simp]
-lemma f_IntegrableOn [d : ContinuousDistFunc] (E : Set ℝ): IntegrableOn f E := by
-  rw [IntegrableOn]
-  exact f_Integrable_restrict E
 
 @[simp]
 lemma f_EventuallyLE_ae [d : ContinuousDistFunc] (E : Set ℝ): 0 ≤ᶠ[ae (volume.restrict E)] f := by
@@ -70,7 +68,7 @@ lemma f_EventuallyLE_ae [d : ContinuousDistFunc] (E : Set ℝ): 0 ≤ᶠ[ae (vol
 lemma F_nonneg [d : ContinuousDistFunc] (x : ℝ):
     0 ≤ F x := by
   unfold F P
-  exact DistFunc.hp {X | X ≤ x}
+  exact QuasiDistFunc.hp {X | X ≤ x}
 
 lemma F_integral [d : ContinuousDistFunc] :
     F = fun x => ∫ t in Iic x, d.f t := by
@@ -182,6 +180,5 @@ theorem F_deriv_eq_f [d : ContinuousDistFunc] (x : ℝ)
     deriv F x = f x  := by
   rw [F_integral]
   exact Continuous.deriv_integral_Iic x f_Integrable hc
-
 
 end ContinuousDistFunc

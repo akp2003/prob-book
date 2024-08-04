@@ -14,10 +14,12 @@ lemma Summable.of_tsum_ne_zero {ι α : Type*} [AddCommMonoid α] [TopologicalSp
 
 -- Definition 1.2
 -- A huge thanks to Eric Wieser for his help on zulip :)
-class DistFunc (Ω : Type u) where
+class QuasiDistFunc (Ω : Type u) where
   prob : Set Ω → ℝ
   hp (E : Set Ω) : prob E ≥ 0
   hu : prob (Set.univ) = 1
+
+class DistFunc (Ω : Type u) extends QuasiDistFunc Ω where
   -- The third axiom of Kolmogorov (two sets version)
   h3 (A B : Set Ω) (hd : Disjoint A B) : prob (A ∪ B) = prob A + prob B
 
@@ -48,7 +50,7 @@ noncomputable
 instance : Coe (DiscreteDistFunc Ω) (DistFunc Ω) where
   coe x := x.toDistFunc
 
-def P [d : DistFunc Ω] (E : Set Ω) : ℝ := d.prob E
+def P [d : QuasiDistFunc Ω] (E : Set Ω) : ℝ := d.prob E
 
 -- toOuterMeasure and toPMF
 open MeasureTheory
@@ -124,7 +126,7 @@ theorem P_positivity [d : DiscreteDistFunc Ω] (E : Set Ω) :
 --2
 theorem P_eq_one [d : DiscreteDistFunc Ω]:
   P (Set.univ : Set Ω) = 1 := by
-  exact DistFunc.hu
+  exact QuasiDistFunc.hu
 
 --3
 theorem P_le_of_subset [d : DiscreteDistFunc Ω] (E : Set Ω) (F : Set Ω) (hss : E ⊂ F):
