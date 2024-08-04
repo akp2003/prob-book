@@ -5,13 +5,37 @@ import Mathlib.Tactic.DeriveFintype
 variable {Ω : Type u}
 
 -- Definition 1.2
+-- A huge thanks to Eric Wieser for his help on zulip :)
 class DistFunc (Ω : Type u) where
+  prob : Set Ω → ℝ
+  hp (E : Set Ω) : prob E ≥ 0
+  hu : prob (Set.univ) = 1
+
+class DiscreteDistFunc (Ω : Type u) :=
+  hc : Countable Ω
+  -- m returns probability
   m : Ω → ℝ
   hp (ω : Ω) : m ω ≥ 0
-  hs : (∑' ω, (m ω)) = 1
+  hu : (∑' ω, (m ω)) = 1
+
+@[simp]
+noncomputable
+instance DiscreteDistFunc.toDistFunc [d : DiscreteDistFunc Ω] : DistFunc Ω := {
+  prob := fun (E : Set Ω) => (∑' (ω : E), (d.m ω))
+  hp := by
+    intro E
+    simp [d.hp]
+    have hp1 (ω : ↑E) : 0 ≤  d.m (↑ω)  := by exact d.hp _
+    exact tsum_nonneg hp1
+  hu := by
+    simp [d.hu]
+}
 
 noncomputable
-def P [d : DistFunc Ω] (E : Set Ω) := (∑' (ω : E), (d.m ω))
+instance : Coe (DiscreteDistFunc Ω) (DistFunc Ω) where
+  coe x := x.toDistFunc
+
+def P [d : DistFunc Ω] (E : Set Ω) : ℝ := d.prob E
 
 -- Example 1.7
 namespace Example_1_7
@@ -26,14 +50,15 @@ inductive Coin2 where
 open Coin2
 
 noncomputable
-instance dist : DistFunc Coin2 := {
+instance dist : DiscreteDistFunc Coin2 := {
   m := fun (x : Coin2) => 1/4
   hp := by simp
-  hs := by
+  hu := by
     rw [one_div, tsum_const]
     have hc : Nat.card Coin2 = 4 := by aesop
     rw [hc]
     norm_num
+  hc := by exact Finite.to_countable
 }
 
 lemma dist_pairwise : Pairwise (fun (x y : Coin2) => dist.m x = dist.m y) := by
@@ -41,13 +66,13 @@ lemma dist_pairwise : Pairwise (fun (x y : Coin2) => dist.m x = dist.m y) := by
 
 def E : Finset Coin2 := ⟨{HH,HT,TH},by simp⟩
 
-example : @P _ dist E = 3/4 := by
+example : @P _ dist (E : Set Coin2) = 3/4 := by
   rw [P, dist]
   aesop
 
 def F : Finset Coin2 := ⟨{HH,HT},by simp⟩
 
-example : @P _ dist F = 2/4 := by
+example : @P _ dist (F : Set Coin2) = 2/4 := by
   rw [P, dist]
   aesop
 
@@ -55,7 +80,7 @@ end Example_1_7
 
 --Theorem 1.1
 --1
-theorem P_positivity [d : DistFunc Ω] (E : Set Ω) (hsumE : Summable fun i : E ↦ d.m ↑i):
+theorem P_positivity [d : DiscreteDistFunc Ω] (E : Set Ω) (hsumE : Summable fun i : E ↦ d.m ↑i):
   P E ≥ 0 := by
   unfold P
   have hp (ω : E) : d.m ω ≥ 0 := by
@@ -65,14 +90,12 @@ theorem P_positivity [d : DistFunc Ω] (E : Set Ω) (hsumE : Summable fun i : E 
     _ ≥ 0 := by simp
 
 --2
-theorem P_eq_one [d : DistFunc Ω]:
+theorem P_eq_one [d : DiscreteDistFunc Ω]:
   P (Set.univ : Set Ω) = 1 := by
-  unfold P
-  rw [tsum_univ]
-  exact d.hs
+  exact DistFunc.hu
 
 --3
-theorem P_le_of_subset [d : DistFunc Ω] (E : Set Ω) (F : Set Ω) (hss : E ⊂ F)
+theorem P_le_of_subset [d : DiscreteDistFunc Ω] (E : Set Ω) (F : Set Ω) (hss : E ⊂ F)
   (hsumE : Summable fun i : E ↦ d.m ↑i)
   (hsumF : Summable fun i : F ↦ d.m ↑i):
   P E ≤ P F := by
@@ -87,7 +110,7 @@ theorem P_le_of_subset [d : DistFunc Ω] (E : Set Ω) (F : Set Ω) (hss : E ⊂ 
   exact tsum_le_tsum_of_inj e hi h1 h2 hsumE hsumF
 
 --4
-theorem P_union_disjoint [d : DistFunc Ω] (A : Set Ω) (B : Set Ω)
+theorem P_union_disjoint [d : DiscreteDistFunc Ω] (A : Set Ω) (B : Set Ω)
   (hd : Disjoint A B)
   (hsumA : Summable fun i : A ↦ d.m ↑i)
   (hsumB : Summable fun i : B ↦ d.m ↑i):
@@ -96,7 +119,7 @@ theorem P_union_disjoint [d : DistFunc Ω] (A : Set Ω) (B : Set Ω)
   exact tsum_union_disjoint hd hsumA hsumB
 
 --5
-theorem P_compl [d : DistFunc Ω] (A : Set Ω)
+theorem P_compl [d : DiscreteDistFunc Ω] (A : Set Ω)
   (hsum : Summable fun i : A ↦ d.m ↑i)
   (hsumc : Summable fun i : (Set.compl A) ↦ d.m ↑i):
    P (Aᶜ) = 1 - P (A) := by
@@ -108,23 +131,24 @@ theorem P_compl [d : DistFunc Ω] (A : Set Ω)
   exact hsumc
   exact hsum
 
-lemma P_empty [DistFunc Ω] : P (∅ : Set Ω) = 0 := by
+lemma P_empty [DiscreteDistFunc Ω] : P (∅ : Set Ω) = 0 := by
   rw [P]
   exact tsum_empty
 
 open Finset
 --Theorem 1.2
-theorem P_fin_pairwise_disjoint_union [d : DistFunc Ω]
+theorem P_fin_pairwise_disjoint_union [d : DiscreteDistFunc Ω]
   (n : ℕ)
   (A : ℕ → Set Ω)
   (hpd : (range n : Set ℕ).Pairwise (Disjoint on A))
   (hsum : ∀j , Summable fun i : A j ↦ d.m ↑i):
     P (⋃ i ∈ range n , A i) = ∑ i ∈ (range n), P (A i) := by
   unfold P
+  dsimp
   rw [tsum_finset_bUnion_disjoint hpd (by exact fun i _ ↦ hsum i)]
 
 --Some modified versions
-theorem P_fin_pairwise_disjoint_union2 [d : DistFunc Ω]
+theorem P_fin_pairwise_disjoint_union2 [d : DiscreteDistFunc Ω]
   (n : ℕ)
   (I : Finset (Fin n))
   (A : (Fin n) → Set Ω)
@@ -136,10 +160,11 @@ theorem P_fin_pairwise_disjoint_union2 [d : DistFunc Ω]
     rw [Pairwise] at hpd
     intro x _ y _
     exact fun a ↦ hpd a
+  dsimp
   rw [tsum_finset_bUnion_disjoint hpd2 (by exact fun i _ ↦ hsum i)]
   rw [←(Finset.tsum_subtype I (fun i => (∑' (x : ↑(A i)), d.m ↑x)))]
 
-theorem P_fin_pairwise_disjoint_union3 [d : DistFunc Ω]
+theorem P_fin_pairwise_disjoint_union3 [d : DiscreteDistFunc Ω]
   (n : ℕ)
   (I : Finset (Fin n))
   (A : (Fin n) → Set Ω)
@@ -147,10 +172,11 @@ theorem P_fin_pairwise_disjoint_union3 [d : DistFunc Ω]
   (hsum : ∀j , Summable fun i : A j ↦ d.m ↑i):
     P (⋃ i ∈ I, A i) = ∑' (i : I), P (A i) := by
   unfold P
+  dsimp
   rw [tsum_finset_bUnion_disjoint hpd (by exact fun i _ ↦ hsum i)]
   rw [←(Finset.tsum_subtype I (fun i => (∑' (x : ↑(A i)), d.m ↑x)))]
 
-theorem P_fin_pairwise_disjoint_union4 [d : DistFunc Ω]
+theorem P_fin_pairwise_disjoint_union4 [d : DiscreteDistFunc Ω]
   (n : ℕ)
   (A : (Fin n) → Set Ω)
   (hpd : Pairwise (Disjoint on A))
@@ -163,11 +189,12 @@ theorem P_fin_pairwise_disjoint_union4 [d : DistFunc Ω]
   have hu : (⋃ i , A i) = ⋃ i ∈ Finset.univ, A i := by simp
   unfold P
   rw [hu]
+  dsimp
   rw [tsum_finset_bUnion_disjoint hpd2 (by exact fun i _ ↦ hsum i)]
   exact Eq.symm (tsum_fintype fun b ↦ ∑' (ω : ↑(A b)), d.m ↑ω)
 
 --Theorem 1.3
-theorem P_fin_pairwise_disjoint_inter [d : DistFunc Ω]
+theorem P_fin_pairwise_disjoint_inter [d : DiscreteDistFunc Ω]
   (n : ℕ) (A : ℕ → Set Ω)
   (hpd : (Finset.range n : Set ℕ).Pairwise (Disjoint on A))
   (huniv : Set.univ = (⋃ i ∈ range n, A i)) (E : Set Ω)
@@ -196,7 +223,7 @@ theorem P_fin_pairwise_disjoint_inter [d : DistFunc Ω]
   rw [hu]
 
 --Corollary 1.1
-theorem P_inter_add_compl [d : DistFunc Ω]
+theorem P_inter_add_compl [d : DiscreteDistFunc Ω]
   (A : Set Ω) (B : Set Ω)
   (hsum : Summable fun i : (Set.inter A B) ↦ d.m ↑i)
   (hsumc : Summable fun i : (Set.inter A Bᶜ) ↦ d.m ↑i):
