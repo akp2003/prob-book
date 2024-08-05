@@ -1,6 +1,9 @@
 import Mathlib.Init.Set
 import Mathlib.Topology.Instances.ENNReal
 import Mathlib.Tactic.DeriveFintype
+import Mathlib.MeasureTheory.Measure.Dirac
+import Mathlib.Probability.ProbabilityMassFunction.Basic
+import Mathlib.Data.ENNReal.Basic
 
 variable {Ω : Type u}
 
@@ -256,3 +259,69 @@ theorem P_inter_add_compl [d : DiscreteDistFunc Ω]
   rw [sum_range_succ]
   rw [sum_range_succ]
   simp
+
+-- toOuterMeasure and toPMF
+open MeasureTheory
+open MeasureTheory.OuterMeasure
+
+noncomputable
+def DiscreteDistFunc.toOuterMeasure (d : DiscreteDistFunc Ω) : OuterMeasure Ω :=
+  OuterMeasure.sum fun x : Ω => Real.toNNReal (d.m x) • dirac x
+
+lemma Summable.of_tsum_ne_zero {ι α : Type*} [AddCommMonoid α] [TopologicalSpace α] [T2Space α] {f : ι → α}
+   (hf : ∑' i, f i ≠ 0) : Summable f := not_imp_comm.1 tsum_eq_zero_of_not_summable hf
+
+-- Thanks to Yaël Dillies for proving this nice lemma
+lemma HasSum.of_tsum_ne_zero {ι α : Type*} [AddCommMonoid α] [TopologicalSpace α] [T2Space α] {f : ι → α}
+   (hf : ∑' i, f i ≠ 0) : HasSum f (∑' i, f i) := by
+  obtain ⟨x, hx⟩ : Summable f := Summable.of_tsum_ne_zero hf
+  rwa [hx.tsum_eq]
+
+theorem tsum_ofReal_eq {f : α → ℝ} (hs : Summable f) (hp : ∀a, f a ≥ 0):
+    ENNReal.ofReal (∑' a, f a) = ∑' a, ENNReal.ofReal (f a) := by
+  let g : α → NNReal := fun a => (f a).toNNReal
+  have hsg : Summable g := by exact Summable.toNNReal hs
+  have h1 : ENNReal.ofReal (∑' (a : α), f a) ≠ ⊤ := by exact ENNReal.ofReal_ne_top
+  have h2 : ∑' (a : α), ENNReal.ofReal (f a) ≠ ⊤ := by exact ENNReal.tsum_coe_ne_top_iff_summable.mpr hsg
+  rw [← ENNReal.toReal_eq_toReal h1 h2]
+  rw [ENNReal.tsum_toReal_eq]
+  rw [ENNReal.toReal_ofReal]
+  have he (a : α) : f a = (fun a => (ENNReal.ofReal (f a)).toReal) a := by
+    simp
+    rw [ENNReal.toReal_ofReal ]
+    exact hp a
+  rw [tsum_congr he]
+  exact tsum_nonneg hp
+  exact fun a ↦ ENNReal.ofReal_ne_top
+
+noncomputable
+def DiscreteDistFunc.toPMF (d : DiscreteDistFunc Ω) : PMF Ω := {
+  val := fun ω : Ω => ENNReal.ofReal (d.m ω)
+  property := by
+    let f : Ω → ENNReal := fun ω : Ω => ENNReal.ofReal (d.m ω)
+    have hz : ∑' (ω : Ω), d.m ω ≠ 0 := by
+      simp [d.hu]
+    have hnt (ω : Ω) : ENNReal.ofReal (d.m ω) ≠ ⊤ := by
+      aesop
+    have h3 : ∑' (ω : Ω), f ω = ENNReal.ofReal (∑' (ω : Ω), d.m ω) := by
+      unfold_let
+      simp
+      rw [tsum_ofReal_eq (Summable.of_tsum_ne_zero hz)]
+      exact hp
+    have hs : ∑' (ω : Ω), f ω = 1 := by
+      simp_all only [ne_eq, f]
+      simp [ENNReal.tsum_toReal_eq hnt]
+      exact hu
+    have hz2 : ∑' (ω : Ω), f ω ≠ 0 := by
+      simp [hs]
+    rw [← hs]
+    simp [HasSum.of_tsum_ne_zero hz2]
+}
+
+
+
+--Theorem 1.4
+theorem P_union [d : DiscreteDistFunc Ω]
+  (A : Set Ω) (B : Set Ω):
+    P (A ∪ B) = P A + P B - P (A ∩ B) := by
+  sorry
