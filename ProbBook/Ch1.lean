@@ -162,13 +162,13 @@ end Example_1_7
 
 --Theorem 1.1
 --1
-theorem P_positivity [d : DiscreteDistFunc Ω] (E : Set Ω) (hsumE : Summable fun i : E ↦ d.m ↑i):
+theorem P_positivity [d : DiscreteDistFunc Ω] (E : Set Ω) :
   P E ≥ 0 := by
   unfold P
   have hp (ω : E) : d.m ω ≥ 0 := by
     exact d.hp ↑ω
   calc
-    ∑' (ω : ↑E), d.m ↑ω ≥ ∑' (i : ↑E), 0 := by rel [(tsum_le_tsum hp (summable_zero) (hsumE))]
+    ∑' (ω : ↑E), d.m ↑ω ≥ ∑' (i : ↑E), 0 := by rel [(tsum_le_tsum hp (summable_zero) (d.summable_set E))]
     _ ≥ 0 := by simp
 
 --2
@@ -177,9 +177,7 @@ theorem P_eq_one [d : DiscreteDistFunc Ω]:
   exact DistFunc.hu
 
 --3
-theorem P_le_of_subset [d : DiscreteDistFunc Ω] (E : Set Ω) (F : Set Ω) (hss : E ⊂ F)
-  (hsumE : Summable fun i : E ↦ d.m ↑i)
-  (hsumF : Summable fun i : F ↦ d.m ↑i):
+theorem P_le_of_subset [d : DiscreteDistFunc Ω] (E : Set Ω) (F : Set Ω) (hss : E ⊂ F):
   P E ≤ P F := by
   unfold P
   have hs : E ⊆ F := subset_of_ssubset hss
@@ -189,29 +187,23 @@ theorem P_le_of_subset [d : DiscreteDistFunc Ω] (E : Set Ω) (F : Set Ω) (hss 
     aesop
   have h1 : ∀ c ∉ Set.range e, 0 ≤ d.m c := fun c _ ↦ d.hp ↑c
   have h2 : ∀ (i : E), d.m i ≤ d.m (e i) := fun i ↦ Preorder.le_refl (d.m ↑i)
-  exact tsum_le_tsum_of_inj e hi h1 h2 hsumE hsumF
+  exact tsum_le_tsum_of_inj e hi h1 h2 (d.summable_set E) (d.summable_set F)
 
 --4
 theorem P_union_disjoint [d : DiscreteDistFunc Ω] (A : Set Ω) (B : Set Ω)
-  (hd : Disjoint A B)
-  (hsumA : Summable fun i : A ↦ d.m ↑i)
-  (hsumB : Summable fun i : B ↦ d.m ↑i):
+  (hd : Disjoint A B):
    P (A ∪ B) = P A + P B := by
   unfold P
-  exact tsum_union_disjoint hd hsumA hsumB
+  exact tsum_union_disjoint hd (d.summable_set A) (d.summable_set B)
 
 --5
-theorem P_compl [d : DiscreteDistFunc Ω] (A : Set Ω)
-  (hsum : Summable fun i : A ↦ d.m ↑i)
-  (hsumc : Summable fun i : (Set.compl A) ↦ d.m ↑i):
+theorem P_compl [d : DiscreteDistFunc Ω] (A : Set Ω):
    P (Aᶜ) = 1 - P (A) := by
   rewrite [← (@P_eq_one Ω d)]
   rewrite [(Set.compl_union_self A).symm]
   rewrite [P_union_disjoint]
   simp
   exact Set.disjoint_compl_left_iff_subset.mpr fun ⦃a⦄ a ↦ a
-  exact hsumc
-  exact hsum
 
 lemma P_empty [DiscreteDistFunc Ω] : P (∅ : Set Ω) = 0 := by
   rw [P]
@@ -222,20 +214,18 @@ open Finset
 theorem P_fin_pairwise_disjoint_union [d : DiscreteDistFunc Ω]
   (n : ℕ)
   (A : ℕ → Set Ω)
-  (hpd : (range n : Set ℕ).Pairwise (Disjoint on A))
-  (hsum : ∀j , Summable fun i : A j ↦ d.m ↑i):
+  (hpd : (range n : Set ℕ).Pairwise (Disjoint on A)):
     P (⋃ i ∈ range n , A i) = ∑ i ∈ (range n), P (A i) := by
   unfold P
   dsimp
-  rw [tsum_finset_bUnion_disjoint hpd (by exact fun i _ ↦ hsum i)]
+  rw [tsum_finset_bUnion_disjoint hpd (by exact fun i _ ↦ (fun j ↦ d.summable_set (A j)) i)]
 
 --Some modified versions
 theorem P_fin_pairwise_disjoint_union2 [d : DiscreteDistFunc Ω]
   (n : ℕ)
   (I : Finset (Fin n))
   (A : (Fin n) → Set Ω)
-  (hpd : Pairwise (Disjoint on A))
-  (hsum : ∀j , Summable fun i : A j ↦ d.m ↑i):
+  (hpd : Pairwise (Disjoint on A)):
     P (⋃ i ∈ I, A i) = ∑' (i : I), P (A i) := by
   unfold P
   have hpd2 : (I : Set (Fin n)).Pairwise (Disjoint on A) := by
@@ -243,26 +233,24 @@ theorem P_fin_pairwise_disjoint_union2 [d : DiscreteDistFunc Ω]
     intro x _ y _
     exact fun a ↦ hpd a
   dsimp
-  rw [tsum_finset_bUnion_disjoint hpd2 (by exact fun i _ ↦ hsum i)]
+  rw [tsum_finset_bUnion_disjoint hpd2 (by exact fun i _ ↦ (fun j ↦ d.summable_set (A j)) i)]
   rw [←(Finset.tsum_subtype I (fun i => (∑' (x : ↑(A i)), d.m ↑x)))]
 
 theorem P_fin_pairwise_disjoint_union3 [d : DiscreteDistFunc Ω]
   (n : ℕ)
   (I : Finset (Fin n))
   (A : (Fin n) → Set Ω)
-  (hpd : (I : Set (Fin n)).Pairwise (Disjoint on A))
-  (hsum : ∀j , Summable fun i : A j ↦ d.m ↑i):
+  (hpd : (I : Set (Fin n)).Pairwise (Disjoint on A)):
     P (⋃ i ∈ I, A i) = ∑' (i : I), P (A i) := by
   unfold P
   dsimp
-  rw [tsum_finset_bUnion_disjoint hpd (by exact fun i _ ↦ hsum i)]
+  rw [tsum_finset_bUnion_disjoint hpd (by exact fun i _ ↦ (fun j ↦ d.summable_set (A j)) i)]
   rw [←(Finset.tsum_subtype I (fun i => (∑' (x : ↑(A i)), d.m ↑x)))]
 
 theorem P_fin_pairwise_disjoint_union4 [d : DiscreteDistFunc Ω]
   (n : ℕ)
   (A : (Fin n) → Set Ω)
-  (hpd : Pairwise (Disjoint on A))
-  (hsum : ∀j , Summable fun i : A j ↦ d.m ↑i):
+  (hpd : Pairwise (Disjoint on A)):
     P (⋃ i , A i) = ∑' i , P (A i) := by
   have hpd2 : ((Finset.univ : Finset (Fin n)) : Set (Fin n)).Pairwise (Disjoint on A) := by
     rw [Pairwise] at hpd
@@ -272,15 +260,14 @@ theorem P_fin_pairwise_disjoint_union4 [d : DiscreteDistFunc Ω]
   unfold P
   rw [hu]
   dsimp
-  rw [tsum_finset_bUnion_disjoint hpd2 (by exact fun i _ ↦ hsum i)]
+  rw [tsum_finset_bUnion_disjoint hpd2 (by exact fun i _ ↦ (fun j ↦ d.summable_set (A j)) i)]
   exact Eq.symm (tsum_fintype fun b ↦ ∑' (ω : ↑(A b)), d.m ↑ω)
 
 --Theorem 1.3
 theorem P_fin_pairwise_disjoint_inter [d : DiscreteDistFunc Ω]
   (n : ℕ) (A : ℕ → Set Ω)
   (hpd : (Finset.range n : Set ℕ).Pairwise (Disjoint on A))
-  (huniv : Set.univ = (⋃ i ∈ range n, A i)) (E : Set Ω)
-  (hsumEA : ∀j , Summable fun i : ↑(E ∩ A j) ↦ d.m ↑i):
+  (huniv : Set.univ = (⋃ i ∈ range n, A i)) (E : Set Ω):
     P E = ∑ i ∈ range n, P (E ∩ A i) := by
   let B : ℕ → Set Ω := fun i => E ∩ A i
   have hpdB : (Finset.range n : Set ℕ).Pairwise (Disjoint on B) := by
@@ -293,7 +280,6 @@ theorem P_fin_pairwise_disjoint_inter [d : DiscreteDistFunc Ω]
     rw [Function.onFun_apply] at hpd
     rw [Set.disjoint_iff_inter_eq_empty] at hpd
     simp_all only [Set.disjoint_iUnion_left, ne_eq, Set.inter_empty]
-  have hsumB : ∀j , Summable fun i : B j ↦ d.m ↑i := by exact fun j ↦ hsumEA j
   have hu : ⋃ i ∈ range n, B i = E := by
     unfold_let
     simp only
@@ -301,14 +287,12 @@ theorem P_fin_pairwise_disjoint_inter [d : DiscreteDistFunc Ω]
     ⋃ i ∈ range n, E ∩ A i = E ∩ (⋃ i ∈ range n, A i) := by exact Eq.symm (Set.inter_iUnion₂ E fun i _ ↦ A i)
     _ = E ∩ Set.univ := by exact congrArg (Inter.inter E) (id (Eq.symm huniv))
     _ = E := by simp
-  rw [← P_fin_pairwise_disjoint_union n B hpdB hsumB]
+  rw [← P_fin_pairwise_disjoint_union n B hpdB]
   rw [hu]
 
 --Corollary 1.1
 theorem P_inter_add_compl [d : DiscreteDistFunc Ω]
-  (A : Set Ω) (B : Set Ω)
-  (hsum : Summable fun i : (Set.inter A B) ↦ d.m ↑i)
-  (hsumc : Summable fun i : (Set.inter A Bᶜ) ↦ d.m ↑i):
+  (A : Set Ω) (B : Set Ω):
     P A = P (A ∩ B) + P (A ∩ Bᶜ) := by
   let B' (i : ℕ) : Set Ω :=
     match i with
@@ -324,17 +308,7 @@ theorem P_inter_add_compl [d : DiscreteDistFunc Ω]
   have huniv : Set.univ = ⋃ i ∈ range 2, B' i := by
     rw [range_succ]
     simp_all only [coe_range, range_one, mem_insert, mem_singleton, Set.iUnion_iUnion_eq_or_left,Set.iUnion_iUnion_eq_left, Set.compl_union_self, B']
-  have hsumB' : ∀j, Summable fun (i : @Inter.inter (Set Ω) _ A (B' j)) ↦ d.m ↑i := by
-    intro j
-    match j with
-      | 0 => exact hsum
-      | 1 => exact hsumc
-      | x+2 =>
-        have hx2 : B' (x+2) = ∅ := rfl
-        rw [hx2]
-        rw [Set.inter_empty A]
-        simp [summable_empty]
-  rw [P_fin_pairwise_disjoint_inter 2 B' hpd huniv A hsumB']
+  rw [P_fin_pairwise_disjoint_inter 2 B' hpd huniv A]
   rw [sum_range_succ]
   rw [sum_range_succ]
   simp
@@ -346,7 +320,7 @@ theorem P_sdiff [d : DiscreteDistFunc Ω]
   have hd : Disjoint (A \ B) (A ∩ B) := by exact Set.disjoint_sdiff_inter
   have hu : A = (A \ B) ∪ (A ∩ B) := by exact Eq.symm (Set.diff_union_inter A B)
   rw [@eq_sub_iff_add_eq]
-  rw [← P_union_disjoint (A \ B) (A ∩ B) hd (d.summable_set (A \ B)) (d.summable_set (A ∩ B))]
+  rw [← P_union_disjoint (A \ B) (A ∩ B) hd]
   rw [← hu]
 
 --Theorem 1.4
@@ -370,13 +344,12 @@ theorem P_union [d : DiscreteDistFunc Ω]
     have hd5 : Disjoint (A ∩ B) (B \ A) := by exact id (Disjoint.symm hd3)
     have hd6 : Disjoint (B \ A) (A \ B) := by exact id (Disjoint.symm hd2)
     aesop
-  have hsum : ∀ (j : ℕ), Summable fun i : C j ↦ d.m ↑i := by exact fun j ↦ DiscreteDistFunc.summable_set (C j)
   have hu : A ∪ B = ⋃ i ∈ range 3, C i := by
     rw [range_succ]
     rw [range_succ]
     aesop
   rw [hu]
-  rw [P_fin_pairwise_disjoint_union 3 C hpd hsum]
+  rw [P_fin_pairwise_disjoint_union 3 C hpd ]
   rw [sum_range_succ]
   rw [sum_range_succ]
   rw [sum_range_succ]
