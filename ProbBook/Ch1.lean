@@ -117,6 +117,7 @@ noncomputable
 def DiscreteDistFunc.toMeasure (d : DiscreteDistFunc Ω) [MeasurableSpace Ω] : Measure Ω :=
   d.toPMF.toMeasure
 
+namespace DiscreteDistFunc
 --Theorem 1.1
 --1
 theorem P_positivity [d : DiscreteDistFunc Ω] (E : Set Ω) :
@@ -316,3 +317,5 @@ theorem P_union [d : DiscreteDistFunc Ω]
   rw [P_sdiff B A]
   rw [Set.inter_comm]
   ring
+
+end DiscreteDistFunc
