@@ -4,7 +4,9 @@ import Mathlib.MeasureTheory.Integral.SetIntegral
 import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 import Mathlib.Data.Real.Basic
 import Mathlib.MeasureTheory.Measure.Haar.OfBasis
-import Mathlib
+import Mathlib.Probability.Cdf
+import Mathlib.Analysis.Calculus.Deriv.Basic
+
 open MeasureTheory Filter Set ProbabilityTheory Topology
 
 -- Definition 2.1
