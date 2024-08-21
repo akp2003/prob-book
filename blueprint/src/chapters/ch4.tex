@@ -260,7 +260,9 @@ that you would assign to the possible outcomes of the second toss, that is, you
 would not expect that the second toss depends on the first.  This idea is
 formalized in the following definition of independent events.
 
-\begin{definition}\label{def 4.2}
+\begin{definition}\label{def 4.1}
+\lean{Independent}
+\leanok
 Let $E$ and $F$ be two events.  We say that they are \emx {independent}\index{events!independent}\index{independence of
 events} if either 1) both events have positive probability and
 $$
@@ -278,25 +280,26 @@ The following theorem provides another way to check for independence.
 \begin{theorem}\label{thm 4.1}
 Two events $E$ and $F$ are independent if and only if 
 $$P(E\cap F) = P(E)P(F)\ .$$
-\proof
-If either event has probability 0, then the two events are independent and the above equation 
-is true, so the theorem is true in this case.  Thus, we may assume that both events have positive 
-probability in what follows. Assume that $E$ and $F$ are independent.  Then $P(E|F) = P(E)$, and so
-\begin{eqnarray*}
-P(E\cap F) & = & P(E|F)P(F) \\
-       & = & P(E)P(F)\ .
-\end{eqnarray*}
-
-Assume next that $P(E\cap F) = P(E)P(F)$.  Then
-$$
-P(E|F) = \frac {P(E \cap F)}{P(F)} = P(E)\ .
-$$
-Also,
-$$
-P(F|E) = \frac {P(F \cap E)}{P(E)} = P(F)\ .
-$$
-Therefore, $E$ and $F$ are independent.
 \end{theorem}
+\begin{proof}
+	If either event has probability 0, then the two events are independent and the above equation 
+	is true, so the theorem is true in this case.  Thus, we may assume that both events have positive 
+	probability in what follows. Assume that $E$ and $F$ are independent.  Then $P(E|F) = P(E)$, and so
+	\begin{eqnarray*}
+		P(E\cap F) & = & P(E|F)P(F) \\
+		& = & P(E)P(F)\ .
+	\end{eqnarray*}
+	
+	Assume next that $P(E\cap F) = P(E)P(F)$.  Then
+	$$
+	P(E|F) = \frac {P(E \cap F)}{P(F)} = P(E)\ .
+	$$
+	Also,
+	$$
+	P(F|E) = \frac {P(F \cap E)}{P(E)} = P(F)\ .
+	$$
+	Therefore, $E$ and $F$ are independent.
+\end{proof}
 
 \begin{example}\label{exam 4.6}
 Suppose that we have a coin which comes up heads with probability $p$, and tails with probability
